@@ -1,0 +1,175 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  fullName     String
+  phoneNumber  String     @unique
+  gender       Gender
+  email        String?
+  street       String?
+  city         String?
+  district     String?
+  customerId   String?
+  profileImage String?
+  role         String     @default("USER")
+  status       UserStatus @default(PENDING)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  booking      Booking[]
+  review       Review[]
+  message      Message[]
+  room         room[]
+
+  @@map("users")
+}
+
+model Driver {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  fullName     String
+  phoneNumber  String     @unique
+  gender       Gender
+  email        String?
+  street       String?
+  city         String?
+  district     String?
+  customerId   String?
+  profileImage String?
+  role         String     @default("DRIVER")
+  status       UserStatus @default(PENDING)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  booking      Booking[]
+  message      Message[]
+  room         room[]
+
+  @@map("drivers")
+}
+
+model Otp {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  phoneNumber String   @unique
+  fullName    String?
+  gender      Gender?
+  role        String?
+  otpCode     String
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("otps")
+}
+
+model Booking {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String?       @db.ObjectId
+  driverId       String?       @db.ObjectId
+  pickupLocation Json
+  destination    Json
+  pickupDate     DateTime
+  pickupTime     String
+  personNo       Int
+  distance       Float
+  estimatedCost  Float
+  status         BookingStatus @default(WAITING)
+  bookingNote    String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  user           User?         @relation(fields: [userId], references: [id])
+  driver         Driver?       @relation(fields: [driverId], references: [id])
+  review         Review[]
+
+  @@map("bookings")
+}
+
+model Search {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?  @db.ObjectId
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("searches")
+}
+
+model Review {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?  @db.ObjectId
+  bookingId String?  @db.ObjectId
+  comment   String
+  rating    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User?    @relation(fields: [userId], references: [id])
+  booking   Booking? @relation(fields: [bookingId], references: [id])
+
+  @@map("reviews")
+}
+
+model room {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?   @db.ObjectId
+  driverId  String?   @db.ObjectId
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User?     @relation(fields: [userId], references: [id])
+  driver    Driver?   @relation(fields: [driverId], references: [id])
+  message   Message[]
+
+  @@unique([userId, driverId])
+  @@map("rooms")
+}
+
+model Message {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?  @db.ObjectId
+  driverId  String?  @db.ObjectId
+  roomId    String?  @db.ObjectId
+  message   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User?    @relation(fields: [userId], references: [id])
+  driver    Driver?  @relation(fields: [driverId], references: [id])
+  room      room?    @relation(fields: [roomId], references: [id])
+
+  @@map("messages")
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  BLOCKED
+  DELETED
+}
+
+enum UserRole {
+  USER
+  DRIVER
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum BookingStatus {
+  WAITING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
